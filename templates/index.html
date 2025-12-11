@@ -1,95 +1,105 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sudoku AI Solver</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>🧩 Sudoku AI Solver</h1>
-            <p class="subtitle">Giải Sudoku với 4 thuật toán AI khác nhau</p>
-        </header>
+      <header>
+        <h1>🧩 Sudoku AI Solver</h1>
+        <p class="subtitle">Giải Sudoku với 4 thuật toán AI khác nhau</p>
+      </header>
 
-        <main>
-            <!-- Control Panel -->
-            <section class="control-panel">
-                <div class="control-group">
-                    <label for="difficulty">Độ khó:</label>
-                    <select id="difficulty">
-                        <option value="easy">Dễ</option>
-                        <option value="medium" selected>Trung bình</option>
-                        <option value="hard">Khó</option>
-                        <option value="expert">Chuyên gia</option>
-                    </select>
-                </div>
+      <main>
+        <!-- Control Panel -->
+        <section class="control-panel">
+          <div class="control-group">
+            <label for="difficulty">Độ khó:</label>
+            <select id="difficulty">
+              <option value="easy">Dễ</option>
+              <option value="medium" selected>Trung bình</option>
+              <option value="hard">Khó</option>
+              <option value="expert">Chuyên gia</option>
+            </select>
+          </div>
 
-                <div class="control-group">
-                    <label for="algorithm">Thuật toán:</label>
-                    <select id="algorithm">
-                        <option value="hybrid" selected>Hybrid (Logic + Backtracking)</option>
-                        <option value="backtracking">Backtracking</option>
-                        <option value="logic">Logic Solver</option>
-                        <option value="dlx">Dancing Links X</option>
-                    </select>
-                </div>
+          <div class="control-group">
+            <label for="algorithm">Thuật toán:</label>
+            <select id="algorithm">
+              <option value="hybrid" selected>
+                Hybrid (Logic + Backtracking)
+              </option>
+              <option value="backtracking">Backtracking</option>
+              <option value="logic">Logic Solver</option>
+              <option value="dlx">Dancing Links X</option>
+            </select>
+          </div>
 
-                <div class="control-group">
-                    <label for="speed">Tốc độ animation:</label>
-                    <select id="speed">
-                        <option value="0">Không có</option>
-                        <option value="10">Rất nhanh</option>
-                        <option value="50" selected>Nhanh</option>
-                        <option value="100">Trung bình</option>
-                        <option value="200">Chậm</option>
-                        <option value="500">Rất chậm</option>
-                    </select>
-                </div>
+          <div class="control-group">
+            <label for="speed">Tốc độ animation:</label>
+            <select id="speed">
+              <option value="0">Không có</option>
+              <option value="10">Rất nhanh</option>
+              <option value="50" selected>Nhanh</option>
+              <option value="100">Trung bình</option>
+              <option value="200">Chậm</option>
+              <option value="500">Rất chậm</option>
+            </select>
+          </div>
 
-                <div class="button-group">
-                    <button id="btnGenerate" class="btn btn-primary">🎲 Tạo puzzle mới</button>
-                    <button id="btnSolve" class="btn btn-success">🤖 Giải bằng AI</button>
-                    <button id="btnStop" class="btn btn-danger" style="display: none;">⏸️ Dừng giải</button>
-                    <button id="btnClear" class="btn btn-secondary">🗑️ Xóa bảng</button>
-                    <button id="btnValidate" class="btn btn-info">✅ Kiểm tra</button>
-                </div>
-            </section>
+          <div class="button-group">
+            <button id="btnGenerate" class="btn btn-primary">
+              🎲 Tạo puzzle mới
+            </button>
+            <button id="btnSolve" class="btn btn-success">
+              🤖 Giải bằng AI
+            </button>
+            <button id="btnStop" class="btn btn-danger" style="display: none">
+              ⏸️ Dừng giải
+            </button>
+            <button id="btnClear" class="btn btn-secondary">🗑️ Xóa bảng</button>
+            <button id="btnValidate" class="btn btn-info">✅ Kiểm tra</button>
+          </div>
+        </section>
 
-            <!-- Sudoku Board -->
-            <section class="board-section">
-                <div id="sudoku-board" class="sudoku-board"></div>
-                
-                <div class="stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Trạng thái:</span>
-                        <span id="status" class="stat-value">Sẵn sàng</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Thời gian:</span>
-                        <span id="time" class="stat-value">0.000s</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Bước:</span>
-                        <span id="steps" class="stat-value">0</span>
-                    </div>
-                </div>
-            </section>
+        <!-- Sudoku Board -->
+        <section class="board-section">
+          <div id="sudoku-board" class="sudoku-board"></div>
 
-            <!-- History Panel -->
-            <section class="history-panel">
-                <h2>📊 Lịch sử giải gần đây</h2>
-                <div id="history-list" class="history-list"></div>
-                <button id="btnLoadHistory" class="btn btn-secondary btn-sm">Tải lịch sử</button>
-            </section>
-        </main>
+          <div class="stats">
+            <div class="stat-item">
+              <span class="stat-label">Trạng thái:</span>
+              <span id="status" class="stat-value">Sẵn sàng</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Thời gian:</span>
+              <span id="time" class="stat-value">0.000s</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Bước:</span>
+              <span id="steps" class="stat-value">0</span>
+            </div>
+          </div>
+        </section>
 
-        <footer>
-            <p>Phát triển với ❤️ bởi FastAPI + Vanilla JavaScript</p>
-        </footer>
+        <!-- History Panel -->
+        <section class="history-panel">
+          <h2>📊 Lịch sử giải gần đây</h2>
+          <div id="history-list" class="history-list"></div>
+          <button id="btnLoadHistory" class="btn btn-secondary btn-sm">
+            Tải lịch sử
+          </button>
+        </section>
+      </main>
+
+      <footer>
+        <p>Phát triển với ❤️ bởi FastAPI + Vanilla JavaScript</p>
+      </footer>
     </div>
 
     <script src="/static/js/app.js" type="module"></script>
-</body>
+  </body>
 </html>

@@ -4,3 +4,6 @@ timestamp,puzzle_id,algorithm,difficulty,time_elapsed,success
 2025-12-11T19:52:12.197111,e17729ff-eaed-4093-800b-e92cc92bbae7,hybrid,unknown,0.0378,True
 2025-12-11T19:52:24.427131,e7162be9-dd33-48b7-ae7c-6bb2705beaa1,dlx,unknown,0.0085,True
 2025-12-11T19:52:45.573200,b8519c5d-7582-4b6e-ba29-339fca6c5ac2,dlx,unknown,0.0075,True
+2025-12-11T20:07:57.349238,8fa2ba21-1719-418b-95dd-1331fbac919c,logic,unknown,0.0062,False
+2025-12-11T20:08:00.409305,4128c447-f8d1-43f0-bdf7-1c449ae07baa,logic,unknown,0.0071,False
+2025-12-11T20:08:10.002279,525ba088-dcbb-4848-9d91-524cda2cd1aa,logic,unknown,2.3769,True
