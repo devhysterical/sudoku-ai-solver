@@ -163,6 +163,22 @@ header h1 {
   margin-bottom: 30px;
 }
 
+.keyboard-hint {
+  background: #e8f4fd;
+  border-left: 4px solid var(--primary-color);
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #2c3e50;
+  max-width: 600px;
+  text-align: center;
+}
+
+.keyboard-hint strong {
+  color: var(--primary-color);
+}
+
 .sudoku-board {
   display: grid;
   grid-template-columns: repeat(9, var(--cell-size));
@@ -216,6 +232,17 @@ header h1 {
 .cell.solving {
   background: #d1ecf1;
   animation: solving 0.5s ease-in-out;
+}
+
+.cell.selected {
+  background: #cce5ff !important;
+  border: 3px solid var(--primary-color) !important;
+  box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+  outline: none;
+}
+
+.cell:focus {
+  outline: none;
 }
 
 /* Box borders */

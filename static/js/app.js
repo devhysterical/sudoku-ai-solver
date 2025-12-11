@@ -14,6 +14,7 @@ const state = {
   currentStep: 0,
   steps: [],
   animationSpeed: 50,
+  selectedCell: null, // Track selected cell for keyboard input
 };
 
 // DOM Elements
@@ -57,9 +58,10 @@ function createBoard() {
       cell.dataset.row = i;
       cell.dataset.col = j;
       cell.textContent = "";
+      cell.tabIndex = 0; // Make cell focusable
 
-      // Allow manual input
-      cell.addEventListener("click", () => handleCellClick(i, j));
+      // Select cell on click
+      cell.addEventListener("click", () => selectCell(i, j));
 
       boardElement.appendChild(cell);
       cells.push(cell);
@@ -68,20 +70,88 @@ function createBoard() {
 }
 
 /**
- * Handle cell click for manual input
+ * Select cell for keyboard input
  */
-function handleCellClick(row, col) {
+function selectCell(row, col) {
   if (state.isAnimating) return;
 
   const cell = getCellElement(row, col);
   if (cell.classList.contains("fixed")) return;
 
-  // Cycle through values 0-9
-  const currentValue = state.board[row][col];
-  const newValue = (currentValue + 1) % 10;
+  // Remove previous selection
+  if (state.selectedCell) {
+    const prevCell = getCellElement(
+      state.selectedCell.row,
+      state.selectedCell.col
+    );
+    prevCell.classList.remove("selected");
+  }
 
-  state.board[row][col] = newValue;
-  updateCell(row, col, newValue);
+  // Set new selection
+  state.selectedCell = { row, col };
+  cell.classList.add("selected");
+  cell.focus();
+}
+
+/**
+ * Handle keyboard input for selected cell
+ */
+function handleKeyboardInput(event) {
+  if (state.isAnimating || !state.selectedCell) return;
+
+  const { row, col } = state.selectedCell;
+  const cell = getCellElement(row, col);
+
+  if (cell.classList.contains("fixed")) return;
+
+  // Handle number keys (1-9) and 0/Delete/Backspace for clearing
+  if (event.key >= "1" && event.key <= "9") {
+    const value = parseInt(event.key);
+    state.board[row][col] = value;
+    updateCell(row, col, value);
+  } else if (
+    event.key === "0" ||
+    event.key === "Delete" ||
+    event.key === "Backspace"
+  ) {
+    state.board[row][col] = 0;
+    updateCell(row, col, 0);
+  } else if (
+    event.key === "ArrowUp" ||
+    event.key === "ArrowDown" ||
+    event.key === "ArrowLeft" ||
+    event.key === "ArrowRight"
+  ) {
+    // Navigate with arrow keys
+    handleArrowNavigation(event.key);
+    event.preventDefault();
+  }
+}
+
+/**
+ * Handle arrow key navigation
+ */
+function handleArrowNavigation(key) {
+  if (!state.selectedCell) return;
+
+  let { row, col } = state.selectedCell;
+
+  switch (key) {
+    case "ArrowUp":
+      row = Math.max(0, row - 1);
+      break;
+    case "ArrowDown":
+      row = Math.min(8, row + 1);
+      break;
+    case "ArrowLeft":
+      col = Math.max(0, col - 1);
+      break;
+    case "ArrowRight":
+      col = Math.min(8, col + 1);
+      break;
+  }
+
+  selectCell(row, col);
 }
 
 /**
@@ -117,6 +187,10 @@ function attachEventListeners() {
   document
     .getElementById("btnValidate")
     .addEventListener("click", validateBoard);
+
+  // Add keyboard event listener
+  document.addEventListener("keydown", handleKeyboardInput);
+
   document
     .getElementById("btnLoadHistory")
     .addEventListener("click", loadHistory);
@@ -415,13 +489,22 @@ function displayHistory(history) {
  * Display board on UI
  */
 function displayBoard(board, markFixed = false) {
+  // Clear selection when displaying new board
+  state.selectedCell = null;
+
   for (let i = 0; i < 9; i++) {
     for (let j = 0; j < 9; j++) {
       const cell = getCellElement(i, j);
       const value = board[i][j];
 
       cell.textContent = value === 0 ? "" : value;
-      cell.classList.remove("fixed", "filled", "error", "highlight");
+      cell.classList.remove(
+        "fixed",
+        "filled",
+        "error",
+        "highlight",
+        "selected"
+      );
 
       if (markFixed && value !== 0) {
         cell.classList.add("fixed");
