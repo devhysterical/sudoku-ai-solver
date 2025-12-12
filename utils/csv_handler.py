@@ -8,6 +8,11 @@ from datetime import datetime
 from typing import List, Tuple, Dict, Any, Optional
 import random
 import uuid
+import sys
+
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from ai.generator import generate_puzzle
 
 
 class CSVHandler:
@@ -97,32 +102,78 @@ class CSVHandler:
         df = pd.DataFrame(puzzles)
         df.to_csv(self.puzzles_file, index=False)
 
-    def get_puzzle(self, difficulty: str = "medium") -> Tuple[List[List[int]], str]:
+    def get_puzzle(
+        self, difficulty: str = "medium", use_generator: bool = True
+    ) -> Tuple[List[List[int]], str]:
         """
-        Get a random puzzle of specified difficulty
+        Get a puzzle of specified difficulty
 
         Args:
             difficulty: Difficulty level (easy/medium/hard/expert)
+            use_generator: If True, generate new puzzle; if False, use stored puzzles
 
         Returns:
             Tuple of (board, puzzle_id)
         """
-        df = pd.read_csv(self.puzzles_file)
+        puzzle_id = str(uuid.uuid4())
 
-        # Filter by difficulty
-        puzzles = df[df["difficulty"] == difficulty]
+        if use_generator:
+            # Generate new puzzle using the generator
+            board, solution = generate_puzzle(difficulty)
 
-        if len(puzzles) == 0:
-            # Fallback to any puzzle
-            puzzles = df
+            # Optionally save to CSV for future reference
+            self._save_puzzle_to_csv(puzzle_id, difficulty, board, solution)
 
-        # Select random puzzle
-        puzzle = puzzles.sample(n=1).iloc[0]
+            return board, puzzle_id
+        else:
+            # Use stored puzzles (legacy behavior)
+            df = pd.read_csv(self.puzzles_file)
 
-        # Parse board string to list
-        board = eval(puzzle["board"])
+            # Filter by difficulty
+            puzzles = df[df["difficulty"] == difficulty]
 
-        return board, puzzle["id"]
+            if len(puzzles) == 0:
+                # Fallback to any puzzle
+                puzzles = df
+
+            # Select random puzzle
+            puzzle = puzzles.sample(n=1).iloc[0]
+
+            # Parse board string to list
+            board = eval(puzzle["board"])
+
+            return board, puzzle["id"]
+
+    def _save_puzzle_to_csv(
+        self,
+        puzzle_id: str,
+        difficulty: str,
+        board: List[List[int]],
+        solution: List[List[int]],
+    ):
+        """
+        Save generated puzzle to CSV file
+
+        Args:
+            puzzle_id: Unique puzzle identifier
+            difficulty: Difficulty level
+            board: Puzzle board
+            solution: Solution board
+        """
+        entry = {
+            "id": puzzle_id,
+            "difficulty": difficulty,
+            "board": str(board),
+            "solution": str(solution),
+        }
+
+        df = pd.DataFrame([entry])
+
+        # Append to existing file
+        if os.path.exists(self.puzzles_file):
+            df.to_csv(self.puzzles_file, mode="a", header=False, index=False)
+        else:
+            df.to_csv(self.puzzles_file, index=False)
 
     def save_history(
         self,

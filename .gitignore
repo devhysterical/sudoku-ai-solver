@@ -39,3 +39,5 @@ Thumbs.db
 *.log
 .env
 *.csv
+test_generator.py
+GENERATOR_OPTIMIZATION.md
