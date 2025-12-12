@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sudoku AI Solver</title>
+    <link rel="icon" type="image/png" href="/static/img/sudoku_logo.png" />
     <link rel="stylesheet" href="/static/css/style.css" />
   </head>
   <body>
@@ -65,39 +66,43 @@
           </div>
         </section>
 
-        <!-- Sudoku Board -->
-        <!-- Sudoku Board -->
-        <section class="board-section">
-          <div class="keyboard-hint">
-            💡 <strong>Hướng dẫn:</strong> Click vào ô → Gõ số từ 1-9 trên bàn
-            phím | Phím mũi tên để di chuyển | Delete/Backspace để xóa
-          </div>
-          <div id="sudoku-board" class="sudoku-board"></div>
+        <!-- Main Game Area with Sidebar -->
+        <div class="game-container">
+          <!-- Sudoku Board Section -->
+          <section class="board-section">
+            <div class="keyboard-hint">
+              💡 <strong>Hướng dẫn:</strong> Click vào ô → Gõ số từ 1-9 trên bàn
+              phím | Phím mũi tên để di chuyển | Delete/Backspace để xóa
+            </div>
+            <div id="sudoku-board" class="sudoku-board"></div>
 
-          <div class="stats">
-            <div class="stat-item">
-              <span class="stat-label">Trạng thái:</span>
-              <span id="status" class="stat-value">Sẵn sàng</span>
+            <div class="stats">
+              <div class="stat-item">
+                <span class="stat-label">Trạng thái:</span>
+                <span id="status" class="stat-value">Sẵn sàng</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Thời gian:</span>
+                <span id="time" class="stat-value">0.000s</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Bước:</span>
+                <span id="steps" class="stat-value">0</span>
+              </div>
             </div>
-            <div class="stat-item">
-              <span class="stat-label">Thời gian:</span>
-              <span id="time" class="stat-value">0.000s</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Bước:</span>
-              <span id="steps" class="stat-value">0</span>
-            </div>
-          </div>
-        </section>
+          </section>
 
-        <!-- History Panel -->
-        <section class="history-panel">
-          <h2>📊 Lịch sử giải gần đây</h2>
-          <div id="history-list" class="history-list"></div>
-          <button id="btnLoadHistory" class="btn btn-secondary btn-sm">
-            Tải lịch sử
-          </button>
-        </section>
+          <!-- History Sidebar -->
+          <aside class="history-sidebar">
+            <div class="history-panel">
+              <h2>📊 Lịch sử giải gần đây</h2>
+              <div id="history-list" class="history-list"></div>
+              <button id="btnLoadHistory" class="btn btn-secondary btn-sm">
+                Tải lịch sử
+              </button>
+            </div>
+          </aside>
+        </div>
       </main>
     </div>
 

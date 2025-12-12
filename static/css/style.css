@@ -22,13 +22,14 @@
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: fixed;
   min-height: 100vh;
   color: var(--text-color);
   padding: 20px;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   background: white;
   border-radius: 20px;
@@ -155,24 +156,33 @@ header h1 {
   font-size: 14px;
 }
 
+/* Game Container - Main Layout */
+.game-container {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
 /* Board Section */
 .board-section {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 30px;
 }
 
 .keyboard-hint {
-  background: #e8f4fd;
+  background: linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 100%);
   border-left: 4px solid var(--primary-color);
   padding: 12px 20px;
   margin-bottom: 20px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   color: #2c3e50;
   max-width: 600px;
   text-align: center;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
 }
 
 .keyboard-hint strong {
@@ -187,7 +197,9 @@ header h1 {
   border: 3px solid var(--dark-bg);
   background: var(--dark-bg);
   margin-bottom: 20px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .cell {
@@ -281,40 +293,52 @@ header h1 {
   color: var(--primary-color);
 }
 
-/* History Panel */
+/* History Sidebar */
+.history-sidebar {
+  width: 350px;
+  flex-shrink: 0;
+}
+
 .history-panel {
   background: var(--light-bg);
   padding: 20px;
-  border-radius: 10px;
-  margin-top: 30px;
+  border-radius: 15px;
+  height: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 20px;
 }
 
 .history-panel h2 {
-  font-size: 1.5em;
+  font-size: 1.3em;
   margin-bottom: 15px;
   color: var(--text-color);
+  font-weight: 600;
 }
 
 .history-list {
-  max-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
   margin-bottom: 15px;
+  padding-right: 5px;
 }
 
 .history-item {
   background: white;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-radius: 10px;
   border-left: 4px solid var(--primary-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: transform 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .history-item:hover {
-  transform: translateX(5px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .history-info {
@@ -324,11 +348,13 @@ header h1 {
 .history-algorithm {
   font-weight: 600;
   color: var(--primary-color);
+  font-size: 0.95em;
 }
 
 .history-time {
   color: #7f8c8d;
-  font-size: 14px;
+  font-size: 0.85em;
+  margin-top: 4px;
 }
 
 .history-status {
@@ -379,6 +405,26 @@ footer {
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .game-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .history-sidebar {
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .history-panel {
+    position: static;
+  }
+
+  .history-list {
+    max-height: 300px;
+  }
+}
+
 @media (max-width: 768px) {
   :root {
     --cell-size: 40px;
@@ -394,6 +440,11 @@ footer {
 
   .control-panel {
     text-align: center;
+  }
+
+  .keyboard-hint {
+    font-size: 12px;
+    padding: 10px 15px;
   }
 
   .control-group {
