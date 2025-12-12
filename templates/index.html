@@ -11,7 +11,10 @@
     <div class="container">
       <header>
         <h1>🧩 Sudoku AI Solver</h1>
-        <p class="subtitle">Giải Sudoku với 4 thuật toán AI khác nhau</p>
+        <p class="subtitle">
+          Giải Sudoku với 7 thuật toán AI - Được tối ưu bởi NumPy & Google
+          OR-Tools
+        </p>
       </header>
 
       <main>
@@ -30,12 +33,21 @@
           <div class="control-group">
             <label for="algorithm">Thuật toán:</label>
             <select id="algorithm">
-              <option value="hybrid" selected>
-                Hybrid (Logic + Backtracking)
-              </option>
-              <option value="backtracking">Backtracking</option>
-              <option value="logic">Logic Solver</option>
-              <option value="dlx">Dancing Links X</option>
+              <optgroup label="⚡ Tối ưu hóa (Recommended)">
+                <option value="ortools" selected>
+                  OR-Tools (Google - Nhanh nhất)
+                </option>
+                <option value="optimized_logic">Optimized Logic</option>
+                <option value="optimized_backtracking">
+                  Optimized Backtracking
+                </option>
+              </optgroup>
+              <optgroup label="🔧 Thuật toán gốc">
+                <option value="hybrid">Hybrid (Logic + Backtracking)</option>
+                <option value="dlx">Dancing Links X</option>
+                <option value="logic">Logic Solver</option>
+                <option value="backtracking">Backtracking</option>
+              </optgroup>
             </select>
           </div>
 

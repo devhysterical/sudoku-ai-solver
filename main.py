@@ -22,7 +22,15 @@ from models import (
 )
 from utils.csv_handler import CSVHandler
 from utils.validator import SudokuValidator
-from ai.solvers import backtracking, logic_solver, hybrid, dlx
+from ai.solvers import (
+    backtracking,
+    logic_solver,
+    hybrid,
+    dlx,
+    optimized_backtracking,
+    optimized_logic,
+    ortools_solver,
+)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -50,10 +58,15 @@ validator = SudokuValidator()
 
 # Solver mapping
 SOLVERS = {
+    # Original solvers
     "backtracking": backtracking.solve,
     "logic": logic_solver.solve,
     "hybrid": hybrid.solve,
     "dlx": dlx.solve,
+    # Optimized solvers (new)
+    "optimized_backtracking": optimized_backtracking.solve,
+    "optimized_logic": optimized_logic.solve,
+    "ortools": ortools_solver.solve,
 }
 
 

@@ -28,9 +28,15 @@ class SolveRequest(BaseModel):
     """Request to solve a Sudoku puzzle"""
 
     board: List[List[int]]
-    algorithm: Literal["backtracking", "logic", "hybrid", "dlx"] = Field(
-        default="hybrid", description="Solver algorithm to use"
-    )
+    algorithm: Literal[
+        "backtracking",
+        "logic",
+        "hybrid",
+        "dlx",
+        "optimized_backtracking",
+        "optimized_logic",
+        "ortools",
+    ] = Field(default="ortools", description="Solver algorithm to use")
 
 
 class Step(BaseModel):
