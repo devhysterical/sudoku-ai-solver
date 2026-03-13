@@ -82,7 +82,7 @@ function selectCell(row, col) {
   if (state.selectedCell) {
     const prevCell = getCellElement(
       state.selectedCell.row,
-      state.selectedCell.col
+      state.selectedCell.col,
     );
     prevCell.classList.remove("selected");
   }
@@ -472,7 +472,7 @@ function displayHistory(history) {
     const time = document.createElement("div");
     time.className = "history-time";
     time.textContent = `${entry.time_elapsed.toFixed(3)}s - ${new Date(
-      entry.timestamp
+      entry.timestamp,
     ).toLocaleString("vi-VN")}`;
 
     info.appendChild(algorithm);
@@ -507,7 +507,7 @@ function displayBoard(board, markFixed = false) {
         "filled",
         "error",
         "highlight",
-        "selected"
+        "selected",
       );
 
       if (markFixed && value !== 0) {
