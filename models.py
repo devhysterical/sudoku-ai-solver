@@ -53,7 +53,7 @@ class SolveResponse(BaseModel):
 
     success: bool
     solved_board: Optional[List[List[int]]] = None
-    steps: List[Step] = []
+    steps: List[Step] = Field(default_factory=list)
     algorithm: str
     time_elapsed: float
     message: Optional[str] = None
@@ -85,7 +85,7 @@ class ValidateResponse(BaseModel):
     """Response from validate endpoint"""
 
     is_valid: bool
-    errors: List[Dict[str, Any]] = []
+    errors: List[Dict[str, Any]] = Field(default_factory=list)
     message: str
 
 

@@ -300,6 +300,7 @@ async function solvePuzzle() {
     updateStats(elapsed, data.steps.length);
 
     state.board = data.solved_board;
+    displayBoard(state.board, false);
   } catch (error) {
     console.error("Error solving puzzle:", error);
     setStatus("Lỗi khi giải puzzle", "error");
@@ -332,6 +333,9 @@ async function animateSteps(steps) {
       if (step.action === "fill") {
         state.board[step.row][step.col] = step.value;
         updateCell(step.row, step.col, step.value);
+      } else if (step.action === "clear") {
+        state.board[step.row][step.col] = 0;
+        updateCell(step.row, step.col, 0);
       }
     }
     return true;

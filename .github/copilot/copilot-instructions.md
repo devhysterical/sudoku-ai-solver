@@ -49,3 +49,8 @@
 * tuân thủ công nghệ cho phép
 * không đề xuất framework ngoài phạm vi
 * không thay đổi yêu cầu project
+
+## Tích hợp AG Kit
+
+- Quy tắc AG Kit đã được bridge sang định dạng Copilot tại `.github/instructions/ag-kit-bridge.instructions.md`.
+- Ưu tiên áp dụng file bridge này khi làm việc trên mã nguồn để đảm bảo Copilot hiểu đúng conventions của dự án.

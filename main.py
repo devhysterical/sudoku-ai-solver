@@ -2,12 +2,12 @@
 FastAPI main application
 """
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import time
+import os
 from typing import Dict, Any
 
 from models import (
@@ -42,7 +42,13 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000"
+        ).split(",")
+        if origin.strip()
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -127,8 +133,10 @@ async def solve_puzzle(request: SolveRequest) -> SolveResponse:
             ),
         )
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.post("/api/generate", response_model=GenerateResponse)
@@ -149,8 +157,10 @@ async def generate_puzzle(request: GenerateRequest) -> GenerateResponse:
             board=board, difficulty=request.difficulty, puzzle_id=puzzle_id
         )
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.post("/api/validate", response_model=ValidateResponse)
@@ -173,12 +183,14 @@ async def validate_board(request: ValidateRequest) -> ValidateResponse:
             message="Board is valid" if is_valid else "Board has errors",
         )
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.get("/api/history", response_model=HistoryResponse)
-async def get_history(limit: int = 50) -> HistoryResponse:
+async def get_history(limit: int = Query(default=50, ge=1, le=500)) -> HistoryResponse:
     """
     Get solving history
 
@@ -193,8 +205,10 @@ async def get_history(limit: int = 50) -> HistoryResponse:
 
         return HistoryResponse(history=history, total_count=len(history))
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.get("/api/stats")
@@ -209,8 +223,10 @@ async def get_statistics() -> Dict[str, Any]:
         stats = csv_handler.get_statistics()
         return stats
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 if __name__ == "__main__":

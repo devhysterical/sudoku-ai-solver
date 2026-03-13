@@ -4,6 +4,7 @@ CSV file handler for puzzles and history
 
 import pandas as pd
 import os
+import ast
 from datetime import datetime
 from typing import List, Tuple, Dict, Any, Optional
 import random
@@ -140,7 +141,7 @@ class CSVHandler:
             puzzle = puzzles.sample(n=1).iloc[0]
 
             # Parse board string to list
-            board = eval(puzzle["board"])
+            board = ast.literal_eval(puzzle["board"])
 
             return board, puzzle["id"]
 
