@@ -2,13 +2,15 @@
 FastAPI main application
 """
 
+import os
+import time
+from pathlib import Path
+from typing import Any, Dict
+
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.middleware.cors import CORSMiddleware
-import time
-import os
-from typing import Dict, Any
 
 from models import (
     SolveRequest,
@@ -55,8 +57,9 @@ app.add_middleware(
 )
 
 # Mount static files and templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Initialize utilities
 csv_handler = CSVHandler()
@@ -83,7 +86,7 @@ async def home(request: Request):
 
 
 @app.post("/api/solve", response_model=SolveResponse)
-async def solve_puzzle(request: SolveRequest) -> SolveResponse:
+def solve_puzzle(request: SolveRequest) -> SolveResponse:
     """
     Solve a Sudoku puzzle using the specified algorithm
 
@@ -95,8 +98,15 @@ async def solve_puzzle(request: SolveRequest) -> SolveResponse:
     """
     try:
         # Validate input board
-        if not validator.validate_board(request.board):
-            raise HTTPException(status_code=400, detail="Invalid board configuration")
+        is_valid, errors = validator.validate_board_detailed(request.board)
+        if not is_valid:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Invalid board configuration",
+                    "errors": errors,
+                },
+            )
 
         # Get solver function
         solver_func = SOLVERS.get(request.algorithm)
@@ -106,9 +116,9 @@ async def solve_puzzle(request: SolveRequest) -> SolveResponse:
             )
 
         # Measure solving time
-        start_time = time.time()
+        start_time = time.perf_counter()
         solved_board, steps = solver_func(request.board)
-        time_elapsed = time.time() - start_time
+        time_elapsed = time.perf_counter() - start_time
 
         # Convert steps to Pydantic models
         step_models = [Step(**step) for step in steps]
@@ -140,7 +150,7 @@ async def solve_puzzle(request: SolveRequest) -> SolveResponse:
 
 
 @app.post("/api/generate", response_model=GenerateResponse)
-async def generate_puzzle(request: GenerateRequest) -> GenerateResponse:
+def generate_puzzle(request: GenerateRequest) -> GenerateResponse:
     """
     Generate a new Sudoku puzzle
 
@@ -164,7 +174,7 @@ async def generate_puzzle(request: GenerateRequest) -> GenerateResponse:
 
 
 @app.post("/api/validate", response_model=ValidateResponse)
-async def validate_board(request: ValidateRequest) -> ValidateResponse:
+def validate_board(request: ValidateRequest) -> ValidateResponse:
     """
     Validate a Sudoku board configuration
 
@@ -190,7 +200,7 @@ async def validate_board(request: ValidateRequest) -> ValidateResponse:
 
 
 @app.get("/api/history", response_model=HistoryResponse)
-async def get_history(limit: int = Query(default=50, ge=1, le=500)) -> HistoryResponse:
+def get_history(limit: int = Query(default=50, ge=1, le=500)) -> HistoryResponse:
     """
     Get solving history
 
@@ -212,7 +222,7 @@ async def get_history(limit: int = Query(default=50, ge=1, le=500)) -> HistoryRe
 
 
 @app.get("/api/stats")
-async def get_statistics() -> Dict[str, Any]:
+def get_statistics() -> Dict[str, Any]:
     """
     Get solver statistics
 

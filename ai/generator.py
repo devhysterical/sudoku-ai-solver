@@ -10,6 +10,8 @@ from copy import deepcopy
 class SudokuGenerator:
     """Generate Sudoku puzzles with varying difficulty levels"""
 
+    MAX_GENERATION_ATTEMPTS = 5
+
     def __init__(self):
         self.board = [[0 for _ in range(9)] for _ in range(9)]
 
@@ -23,13 +25,7 @@ class SudokuGenerator:
         Returns:
             9x9 board with puzzle (0 for empty cells)
         """
-        # Generate a complete valid Sudoku board
-        self._generate_complete_board()
-
-        # Remove numbers based on difficulty
-        cells_to_remove = self._get_cells_to_remove(difficulty)
-        puzzle = self._remove_numbers(self.board, cells_to_remove)
-
+        puzzle, _ = generate_puzzle(difficulty)
         return puzzle
 
     def _generate_complete_board(self):
@@ -135,38 +131,36 @@ class SudokuGenerator:
 
     def _remove_numbers(
         self, complete_board: List[List[int]], cells_to_remove: int
-    ) -> List[List[int]]:
+    ) -> Tuple[List[List[int]], int]:
         """
-        Remove numbers from complete board to create puzzle
+        Remove numbers from complete board while preserving a unique solution.
 
         Args:
             complete_board: Complete valid Sudoku board
             cells_to_remove: Number of cells to remove
 
         Returns:
-            Puzzle board with removed cells (0 for empty)
+            Tuple of (puzzle board with removed cells, number of cells removed)
         """
         puzzle = deepcopy(complete_board)
         removed = 0
-        attempts = 0
-        max_attempts = cells_to_remove * 3
+        positions = [(row, col) for row in range(9) for col in range(9)]
+        random.shuffle(positions)
 
-        while removed < cells_to_remove and attempts < max_attempts:
-            row = random.randint(0, 8)
-            col = random.randint(0, 8)
+        for row, col in positions:
+            if removed >= cells_to_remove:
+                break
 
             if puzzle[row][col] != 0:
                 backup = puzzle[row][col]
                 puzzle[row][col] = 0
 
-                # Check if puzzle still has unique solution
-                # For performance, we skip this check and rely on randomization
-                # In production, you might want to verify uniqueness
-                removed += 1
+                if self._count_solutions(puzzle, limit=2) == 1:
+                    removed += 1
+                else:
+                    puzzle[row][col] = backup
 
-            attempts += 1
-
-        return puzzle
+        return puzzle, removed
 
     def _count_solutions(self, board: List[List[int]], limit: int = 2) -> int:
         """
@@ -239,13 +233,22 @@ def generate_puzzle(
         Tuple of (puzzle, solution)
     """
     generator = SudokuGenerator()
-
-    # Generate complete board (this will be the solution)
-    generator._generate_complete_board()
-    solution = deepcopy(generator.board)
-
-    # Create puzzle by removing numbers
     cells_to_remove = generator._get_cells_to_remove(difficulty)
-    puzzle = generator._remove_numbers(solution, cells_to_remove)
+    best_puzzle = None
+    best_solution = None
+    best_removed = -1
 
-    return puzzle, solution
+    for _ in range(generator.MAX_GENERATION_ATTEMPTS):
+        generator._generate_complete_board()
+        solution = deepcopy(generator.board)
+        puzzle, removed = generator._remove_numbers(solution, cells_to_remove)
+
+        if removed > best_removed:
+            best_puzzle = puzzle
+            best_solution = solution
+            best_removed = removed
+
+        if removed == cells_to_remove:
+            return puzzle, solution
+
+    return best_puzzle, best_solution

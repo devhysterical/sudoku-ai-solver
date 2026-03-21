@@ -2,8 +2,24 @@
 Pydantic models for request and response validation
 """
 
-from typing import List, Dict, Optional, Literal, Any
-from pydantic import BaseModel, Field, validator
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import BaseModel, Field, field_validator
+
+
+def validate_board_grid(board: List[List[int]]) -> List[List[int]]:
+    """Validate a 9x9 Sudoku grid with values in the range 0-9."""
+    if len(board) != 9:
+        raise ValueError("Board must have exactly 9 rows")
+
+    for row in board:
+        if len(row) != 9:
+            raise ValueError("Each row must have exactly 9 columns")
+        for cell in row:
+            if not isinstance(cell, int) or not (0 <= cell <= 9):
+                raise ValueError("Cell values must be integers between 0 and 9")
+
+    return board
 
 
 class SudokuBoard(BaseModel):
@@ -11,17 +27,10 @@ class SudokuBoard(BaseModel):
 
     board: List[List[int]] = Field(..., description="9x9 grid with 0 for empty cells")
 
-    @validator("board")
-    def validate_board(cls, v):
-        if len(v) != 9:
-            raise ValueError("Board must have exactly 9 rows")
-        for row in v:
-            if len(row) != 9:
-                raise ValueError("Each row must have exactly 9 columns")
-            for cell in row:
-                if not (0 <= cell <= 9):
-                    raise ValueError("Cell values must be between 0 and 9")
-        return v
+    @field_validator("board")
+    @classmethod
+    def validate_board(cls, value: List[List[int]]) -> List[List[int]]:
+        return validate_board_grid(value)
 
 
 class SolveRequest(BaseModel):
@@ -37,6 +46,11 @@ class SolveRequest(BaseModel):
         "optimized_logic",
         "ortools",
     ] = Field(default="ortools", description="Solver algorithm to use")
+
+    @field_validator("board")
+    @classmethod
+    def validate_board(cls, value: List[List[int]]) -> List[List[int]]:
+        return validate_board_grid(value)
 
 
 class Step(BaseModel):
@@ -79,6 +93,11 @@ class ValidateRequest(BaseModel):
     """Request to validate a board state"""
 
     board: List[List[int]]
+
+    @field_validator("board")
+    @classmethod
+    def validate_board(cls, value: List[List[int]]) -> List[List[int]]:
+        return validate_board_grid(value)
 
 
 class ValidateResponse(BaseModel):

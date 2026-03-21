@@ -2,51 +2,56 @@
 CSV file handler for puzzles and history
 """
 
-import pandas as pd
-import os
 import ast
+import csv
 from datetime import datetime
-from typing import List, Tuple, Dict, Any, Optional
-import random
+from pathlib import Path
+from threading import Lock
+from typing import Any, Dict, List, Optional, Tuple
+import os
 import uuid
-import sys
 
-# Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import pandas as pd
+
 from ai.generator import generate_puzzle
 
 
 class CSVHandler:
     """Handle CSV operations for puzzles and history"""
 
+    PUZZLE_COLUMNS = ["id", "difficulty", "board", "solution"]
+    HISTORY_COLUMNS = [
+        "timestamp",
+        "puzzle_id",
+        "algorithm",
+        "difficulty",
+        "time_elapsed",
+        "success",
+    ]
+
     def __init__(self):
-        self.data_dir = "data"
-        self.puzzles_file = os.path.join(self.data_dir, "puzzles.csv")
-        self.history_file = os.path.join(self.data_dir, "solver_history.csv")
+        self.base_dir = Path(__file__).resolve().parent.parent
+        self.data_dir = self.base_dir / "data"
+        self.puzzles_file = self.data_dir / "puzzles.csv"
+        self.history_file = self.data_dir / "solver_history.csv"
+        self.max_stored_puzzles = int(os.getenv("MAX_STORED_PUZZLES", "500"))
+        self.max_history_rows = int(os.getenv("MAX_HISTORY_ROWS", "2000"))
+        self._lock = Lock()
         self._initialize_files()
 
     def _initialize_files(self):
         """Initialize CSV files if they don't exist"""
-        os.makedirs(self.data_dir, exist_ok=True)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize puzzles.csv
-        if not os.path.exists(self.puzzles_file):
-            df = pd.DataFrame(columns=["id", "difficulty", "board", "solution"])
+        if not self.puzzles_file.exists():
+            df = pd.DataFrame(columns=self.PUZZLE_COLUMNS)
             df.to_csv(self.puzzles_file, index=False)
             self._generate_sample_puzzles()
 
         # Initialize solver_history.csv
-        if not os.path.exists(self.history_file):
-            df = pd.DataFrame(
-                columns=[
-                    "timestamp",
-                    "puzzle_id",
-                    "algorithm",
-                    "difficulty",
-                    "time_elapsed",
-                    "success",
-                ]
-            )
+        if not self.history_file.exists():
+            df = pd.DataFrame(columns=self.HISTORY_COLUMNS)
             df.to_csv(self.history_file, index=False)
 
     def _generate_sample_puzzles(self):
@@ -91,17 +96,75 @@ class CSVHandler:
         ]
 
         puzzles = [
-            {"id": str(uuid.uuid4()), "difficulty": "easy", "board": str(easy_puzzle)},
+            {
+                "id": str(uuid.uuid4()),
+                "difficulty": "easy",
+                "board": str(easy_puzzle),
+                "solution": None,
+            },
             {
                 "id": str(uuid.uuid4()),
                 "difficulty": "medium",
                 "board": str(medium_puzzle),
+                "solution": None,
             },
-            {"id": str(uuid.uuid4()), "difficulty": "hard", "board": str(hard_puzzle)},
+            {
+                "id": str(uuid.uuid4()),
+                "difficulty": "hard",
+                "board": str(hard_puzzle),
+                "solution": None,
+            },
         ]
 
-        df = pd.DataFrame(puzzles)
+        df = pd.DataFrame(puzzles, columns=self.PUZZLE_COLUMNS)
         df.to_csv(self.puzzles_file, index=False)
+
+    def _read_csv_compat(self, file_path: Path, columns: List[str]) -> pd.DataFrame:
+        """Read a CSV file while tolerating older schema variants."""
+        if not file_path.exists():
+            return pd.DataFrame(columns=columns)
+
+        try:
+            frame = pd.read_csv(file_path)
+        except pd.errors.ParserError:
+            if file_path != self.puzzles_file:
+                raise
+            rows = []
+            with file_path.open("r", encoding="utf-8", newline="") as handle:
+                reader = csv.reader(handle)
+                next(reader, None)
+                for row in reader:
+                    if not row:
+                        continue
+                    rows.append(
+                        {
+                            "id": row[0] if len(row) > 0 else "",
+                            "difficulty": row[1] if len(row) > 1 else "medium",
+                            "board": row[2] if len(row) > 2 else "[]",
+                            "solution": row[3] if len(row) > 3 else None,
+                        }
+                    )
+            frame = pd.DataFrame(rows, columns=self.PUZZLE_COLUMNS)
+
+        for column in columns:
+            if column not in frame.columns:
+                frame[column] = None
+
+        return frame[columns]
+
+    def _append_dataframe(
+        self, file_path: Path, frame: pd.DataFrame, max_rows: Optional[int] = None
+    ) -> None:
+        """Append rows to a CSV file and optionally keep only the newest rows."""
+        columns = self.PUZZLE_COLUMNS if file_path == self.puzzles_file else self.HISTORY_COLUMNS
+        with self._lock:
+            existing = self._read_csv_compat(file_path, columns)
+            if not existing.empty:
+                frame = pd.concat([existing, frame], ignore_index=True)
+            frame = frame[columns]
+            if max_rows is not None and len(frame) > max_rows:
+                frame = frame.tail(max_rows).reset_index(drop=True)
+            frame.to_csv(file_path, index=False)
 
     def get_puzzle(
         self, difficulty: str = "medium", use_generator: bool = True
@@ -128,7 +191,7 @@ class CSVHandler:
             return board, puzzle_id
         else:
             # Use stored puzzles (legacy behavior)
-            df = pd.read_csv(self.puzzles_file)
+            df = self._read_csv_compat(self.puzzles_file, self.PUZZLE_COLUMNS)
 
             # Filter by difficulty
             puzzles = df[df["difficulty"] == difficulty]
@@ -168,13 +231,11 @@ class CSVHandler:
             "solution": str(solution),
         }
 
-        df = pd.DataFrame([entry])
-
-        # Append to existing file
-        if os.path.exists(self.puzzles_file):
-            df.to_csv(self.puzzles_file, mode="a", header=False, index=False)
-        else:
-            df.to_csv(self.puzzles_file, index=False)
+        self._append_dataframe(
+            self.puzzles_file,
+            pd.DataFrame([entry]),
+            max_rows=self.max_stored_puzzles,
+        )
 
     def save_history(
         self,
@@ -203,13 +264,11 @@ class CSVHandler:
             "success": success,
         }
 
-        df = pd.DataFrame([entry])
-
-        # Append to existing file
-        if os.path.exists(self.history_file):
-            df.to_csv(self.history_file, mode="a", header=False, index=False)
-        else:
-            df.to_csv(self.history_file, index=False)
+        self._append_dataframe(
+            self.history_file,
+            pd.DataFrame([entry]),
+            max_rows=self.max_history_rows,
+        )
 
     def get_history(self, limit: int = 50) -> List[Dict[str, Any]]:
         """
@@ -221,10 +280,11 @@ class CSVHandler:
         Returns:
             List of history entries
         """
-        if not os.path.exists(self.history_file):
+        if not self.history_file.exists():
             return []
 
-        df = pd.read_csv(self.history_file)
+        with self._lock:
+            df = self._read_csv_compat(self.history_file, self.HISTORY_COLUMNS)
 
         # Sort by timestamp descending
         df = df.sort_values("timestamp", ascending=False)
@@ -241,7 +301,7 @@ class CSVHandler:
         Returns:
             Dictionary with statistics
         """
-        if not os.path.exists(self.history_file):
+        if not self.history_file.exists():
             return {
                 "total_solves": 0,
                 "success_rate": 0,
@@ -249,7 +309,8 @@ class CSVHandler:
                 "by_algorithm": {},
             }
 
-        df = pd.read_csv(self.history_file)
+        with self._lock:
+            df = self._read_csv_compat(self.history_file, self.HISTORY_COLUMNS)
 
         stats = {
             "total_solves": len(df),

@@ -16,25 +16,16 @@ class SudokuValidator:
     @staticmethod
     def validate_board(board: List[List[int]]) -> bool:
         """
-        Validate basic board structure and values
+        Validate board structure and Sudoku constraints
 
         Args:
             board: 9x9 Sudoku board
 
         Returns:
-            True if board structure is valid
+            True if board is structurally valid and has no duplicate conflicts
         """
-        if not board or len(board) != 9:
-            return False
-
-        for row in board:
-            if not row or len(row) != 9:
-                return False
-            for cell in row:
-                if not SudokuValidator.is_valid_value(cell):
-                    return False
-
-        return True
+        is_valid, _ = SudokuValidator.validate_board_detailed(board)
+        return is_valid
 
     @staticmethod
     def validate_board_detailed(
@@ -52,7 +43,7 @@ class SudokuValidator:
         errors = []
 
         # Check structure
-        if not SudokuValidator.validate_board(board):
+        if not board or len(board) != 9:
             errors.append(
                 {
                     "type": "structure",
@@ -60,6 +51,25 @@ class SudokuValidator:
                 }
             )
             return False, errors
+
+        for row in board:
+            if not row or len(row) != 9:
+                errors.append(
+                    {
+                        "type": "structure",
+                        "message": "Invalid board structure (must be 9x9)",
+                    }
+                )
+                return False, errors
+            for cell in row:
+                if not SudokuValidator.is_valid_value(cell):
+                    errors.append(
+                        {
+                            "type": "value",
+                            "message": "Cell values must be between 0 and 9",
+                        }
+                    )
+                    return False, errors
 
         # Check rows for duplicates
         for i, row in enumerate(board):

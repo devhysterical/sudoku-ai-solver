@@ -15,6 +15,7 @@ const state = {
   steps: [],
   animationSpeed: 50,
   selectedCell: null, // Track selected cell for keyboard input
+  solveController: null,
 };
 
 // DOM Elements
@@ -256,20 +257,28 @@ async function solvePuzzle() {
     await sleep(10);
 
     const algorithm = document.getElementById("algorithm").value;
-    const startTime = performance.now();
+    state.solveController = new AbortController();
 
     const response = await fetch("/api/solve", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      signal: state.solveController.signal,
       body: JSON.stringify({
         board: state.board,
         algorithm: algorithm,
       }),
     });
 
-    if (!response.ok) throw new Error("Failed to solve puzzle");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(
+        errorData?.detail?.message ||
+          errorData?.detail ||
+          "Failed to solve puzzle",
+      );
+    }
 
     const data = await response.json();
 
@@ -295,17 +304,21 @@ async function solvePuzzle() {
       return;
     }
 
-    const elapsed = (performance.now() - startTime) / 1000;
     setStatus("Đã giải thành công!", "success");
-    updateStats(elapsed, data.steps.length);
+    updateStats(data.time_elapsed, data.steps.length);
 
     state.board = data.solved_board;
     displayBoard(state.board, false);
   } catch (error) {
-    console.error("Error solving puzzle:", error);
-    setStatus("Lỗi khi giải puzzle", "error");
+    if (error.name === "AbortError") {
+      setStatus("⏸️ Đã hủy yêu cầu giải", "warning");
+    } else {
+      console.error("Error solving puzzle:", error);
+      setStatus(error.message || "Lỗi khi giải puzzle", "error");
+    }
   } finally {
     state.isAnimating = false;
+    state.solveController = null;
     disableButtons(false);
     showStopButton(false);
   }
@@ -317,6 +330,9 @@ async function solvePuzzle() {
 function stopSolving() {
   if (state.isAnimating) {
     state.isStopped = true;
+    if (state.solveController) {
+      state.solveController.abort();
+    }
     setStatus("⏸️ Đang dừng...", "warning");
   }
 }
